@@ -23,21 +23,31 @@ private:
 	Ui::SssSQtICmainWindow *pUI;
 	QFileSystemModel *pFSM;
 	QGraphicsScene *pGS;
+	QImage *pCurrentImage;
+	QString *sPathFileCurrent;
 	QGraphicsPixmapItem *pGPI;
+
+	bool bImageChanged;
 
 	void initActions();
 	void initGraphicsView();
 	void initTreeView();
 
 protected:
+	void saveImage();
+	void saveAndDestroyImage();
+	void updateGraphicsView();
+	void updateLandscapeIndicator();
+
+	// events
 	void contextMenuEvent(QContextMenuEvent *event);
 	void resizeEvent(QResizeEvent *event);
-	void showEvent(QShowEvent *event);
 
 private slots:
 	void onMenuOpen();
 	void onMenuQuit();
 	void openPath(const QString &sPath);
+
 	void opened(const QString &newPath);
 	void opened2(const QString &path);
 	void onClick(QModelIndex index);
@@ -49,6 +59,10 @@ private slots:
 	void on_buttonRotateCW_clicked();
 	void on_buttonNext_clicked();
 	void on_graphicsView_rubberBandChanged(const QRect &viewportRect, const QPointF &fromScenePoint, const QPointF &toScenePoint);
+
+public slots:
+	void loadImage(const QString &sPathFile);
+
 };
 
 #endif // SSSSQTICMAINWINDOW_H

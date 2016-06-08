@@ -12,7 +12,10 @@ SssSQtICmainWindow::SssSQtICmainWindow(QWidget *parent) :
 	pUI(new Ui::SssSQtICmainWindow),
 	pFSM(new QFileSystemModel),
 	pGS(new QGraphicsScene),
-	pGPI(0) {
+	pCurrentImage(0),
+	sPathFileCurrent(0),
+	pGPI(0),
+	bImageChanged(false) {
 
 	this->pUI->setupUi(this);
 
@@ -47,11 +50,11 @@ void SssSQtICmainWindow::initActions() {
 
 
 void SssSQtICmainWindow::initGraphicsView() {
-	qDebug() << "initGraphicsView";
+	//qDebug() << "initGraphicsView";
 
-	this->pGS->setSceneRect(this->pUI->graphicsView->rect());
+	//this->pGS->setSceneRect(this->pUI->graphicsView->rect());
 	this->pUI->graphicsView->setScene(this->pGS);
-	this->pUI->graphicsView->setResizeAnchor(QGraphicsView::NoAnchor);
+	//this->pUI->graphicsView->setResizeAnchor(QGraphicsView::NoAnchor);
 
 } // initGraphicsView
 
@@ -76,7 +79,7 @@ void SssSQtICmainWindow::initTreeView() {
 	this->pFSM->removeColumn(3); // date
 
 	// filter what to show
-	this->pFSM->setFilter(QDir::NoDotAndDotDot | QDir::AllEntries); // only dirs -> | QDir::AllDirs);
+	this->pFSM->setFilter(QDir::NoDotAndDotDot | QDir::AllEntries);
 
 	// filter out anything that isn't an image
 	QStringList lFilters;
@@ -106,6 +109,65 @@ void SssSQtICmainWindow::initTreeView() {
 } // initTreeView
 
 
+void SssSQtICmainWindow::saveImage() {
+	qDebug() << "TODO: saveImage";
+
+} // saveImage
+
+
+void SssSQtICmainWindow::saveAndDestroyImage() {
+	//qDebug() << "saveAndDestroyImage";
+
+	if (this->bImageChanged) {
+
+		this->saveImage();
+
+	} // if any changes to save
+
+	if (this->pGPI) {
+
+		delete this->pGPI;
+		this->pGPI = 0;
+
+	} // if have already loaded an image
+
+	if (this->pCurrentImage) {
+
+		delete this->pCurrentImage;
+		this->pCurrentImage = 0;
+
+	} // if have an image loaded
+
+	if (this->sPathFileCurrent) {
+
+		delete this->sPathFileCurrent;
+		this->sPathFileCurrent = 0;
+
+	} // if have an image path
+
+} // saveAndDestroyImage
+
+
+void SssSQtICmainWindow::updateGraphicsView() {
+	//qDebug() << "updateGraphicsView";
+
+	this->pUI->graphicsView->fitInView(
+				this->pGS->sceneRect(), Qt::KeepAspectRatio);
+
+} // updateGraphicsView
+
+
+void SssSQtICmainWindow::updateLandscapeIndicator() {
+	//qDebug() << "updateLandscapeIndicator";
+
+	if (!this->pCurrentImage) return;
+
+	this->pUI->radioButtonIsLandscape->setChecked(
+				this->pCurrentImage->width() > this->pCurrentImage->height());
+
+} // updateLandscapeIndicator
+
+
 void SssSQtICmainWindow::contextMenuEvent(QContextMenuEvent *event) {
 	qDebug() << "contextMenuEvent" << event;
 
@@ -113,7 +175,7 @@ void SssSQtICmainWindow::contextMenuEvent(QContextMenuEvent *event) {
 
 
 void SssSQtICmainWindow::onMenuOpen() {
-	qDebug() << "open";
+	//qDebug() << "onMenuOpen";
 
 	QString sPath = QFileDialog::getExistingDirectory(this,
 													  tr("select Folder"),
@@ -133,7 +195,7 @@ void SssSQtICmainWindow::onMenuQuit() {
 
 
 void SssSQtICmainWindow::openPath(const QString &sPath) {
-	qDebug() << "openPath" << sPath;
+	//qDebug() << "openPath" << sPath;
 
 	// no need to attempt if nothing given
 	if (sPath.isEmpty()) return;
@@ -160,52 +222,25 @@ void SssSQtICmainWindow::opened2(const QString &path) {
 
 
 void SssSQtICmainWindow::onClick(QModelIndex index) {
-	qDebug() << "onClick" << index << this->pFSM->filePath(index);
+	//qDebug() << "onClick" << index << this->pFSM->filePath(index);
 
-	if (this->pFSM->isDir(index)) {
+	// we can ignore single-clicks on directories
+	if (this->pFSM->isDir(index)) return;
 
-		qDebug() << "isDir";
+	//qDebug() << "isFile";
 
-	} else {
-
-		qDebug() << "isFile";
-
-		QImage oImage(this->pFSM->filePath(index));
-
-		if (oImage.isNull()) {
-
-			qDebug() << "not valid image";
-			return;
-
-		} // if invalid image file
-
-		//this->pUI->graphicsView->setWindowFilePath(this->pFSM->filePath(index));
-
-		if (this->pGPI) {
-
-			delete this->pGPI;
-			this->pGPI = 0;
-
-		} // if have already loaded an image
-
-		this->pGPI = new QGraphicsPixmapItem(QPixmap::fromImage(oImage));
-		this->pGS->addItem(this->pGPI);
-		//this->pUI->graphicsView->centerOn(this->pGPI);
-		//this->pUI->graphicsView->fitInView(this->pGPI);
-		this->pUI->graphicsView->fitInView(this->pGS->sceneRect(), Qt::KeepAspectRatio);
-
-	} // if dir or file clicked
+	this->loadImage(this->pFSM->filePath(index));
 
 } // onClick
 
 
 void SssSQtICmainWindow::onDoubleClick(QModelIndex index) {
-	qDebug() << "onDoubleClick" << index << this->pFSM->filePath(index);
+	//qDebug() << "onDoubleClick" << index << this->pFSM->filePath(index);
 
 	// we only treat directories for double click
 	if (!this->pFSM->isDir(index)) return;
 
-	qDebug() << "isDir";
+	//qDebug() << "isDir";
 
 	this->openPath(this->pFSM->filePath(index));
 
@@ -239,6 +274,8 @@ void SssSQtICmainWindow::on_buttonRotateCW_clicked() {
 void SssSQtICmainWindow::on_buttonNext_clicked() {
 	qDebug() << "next";
 
+	//this->pUI->treeView->
+
 } // on_buttonNext_clicked
 
 
@@ -248,26 +285,43 @@ void SssSQtICmainWindow::on_graphicsView_rubberBandChanged(const QRect &viewport
 } // on_graphicsView_rubberBandChanged
 
 
+void SssSQtICmainWindow::loadImage(const QString &sPathFile) {
+	//qDebug() << "loadImage" << sPathFile;
+
+	QImage oImage(sPathFile);
+
+	if (oImage.isNull()) {
+
+		qDebug() << "not valid image" << sPathFile;
+		return;
+
+	} // if invalid image file
+
+	//this->pUI->graphicsView->setWindowFilePath(sPathFile);
+
+	// save, and destroy pointers
+	this->saveAndDestroyImage();
+
+	this->sPathFileCurrent = new QString(sPathFile);
+	this->pCurrentImage = new QImage(sPathFile);
+	this->pGPI = new QGraphicsPixmapItem(QPixmap::fromImage(*this->pCurrentImage));
+	this->pGS->addItem(this->pGPI);
+	//this->pUI->graphicsView->centerOn(this->pGPI);
+	//this->pUI->graphicsView->fitInView(this->pGPI);
+	this->pGS->setSceneRect(this->pCurrentImage->rect());
+
+	this->updateGraphicsView();
+	this->updateLandscapeIndicator();
+
+} // loadImage
+
+
 void SssSQtICmainWindow::resizeEvent(QResizeEvent *event) {
-	qDebug() << "resizeEvent";
+	//qDebug() << "resizeEvent";
 
 	//QWidget::resizeEvent(event);
 	QMainWindow::resizeEvent(event);
 
-	this->pGS->setSceneRect(this->pUI->graphicsView->rect());
-	this->pUI->graphicsView->fitInView(this->pGS->sceneRect(), Qt::KeepAspectRatio);
-
-	if (!this->pGPI) return;
-
-	//this->pUI->graphicsView->centerOn(this->pGPI);
-	//this->pUI->graphicsView->fitInView(this->pGPI);
+	this->updateGraphicsView();
 
 } // resizeEvent
-
-
-void SssSQtICmainWindow::showEvent(QShowEvent *event) {
-	qDebug() << "showEvent";
-
-	this->pUI->graphicsView->fitInView(this->pGS->sceneRect(), Qt::KeepAspectRatio); //:KeepAspectRatioByExpanding);
-
-} // showEvent

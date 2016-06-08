@@ -54,13 +54,13 @@
            <enum>Qt::NoContextMenu</enum>
           </property>
           <property name="text">
-           <string>RadioButton</string>
+           <string>is landscape</string>
           </property>
           <property name="checkable">
            <bool>true</bool>
           </property>
           <property name="checked">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
          </widget>
         </item>
@@ -139,8 +139,8 @@
           </property>
           <property name="minimumSize">
            <size>
-            <width>200</width>
-            <height>200</height>
+            <width>0</width>
+            <height>0</height>
            </size>
           </property>
           <property name="maximumSize">
@@ -187,6 +187,12 @@
             <height>200.000000000000000</height>
            </rectf>
           </property>
+          <property name="alignment">
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+          </property>
+          <property name="renderHints">
+           <set>QPainter::Antialiasing|QPainter::HighQualityAntialiasing|QPainter::SmoothPixmapTransform|QPainter::TextAntialiasing</set>
+          </property>
           <property name="dragMode">
            <enum>QGraphicsView::RubberBandDrag</enum>
           </property>
@@ -197,7 +203,7 @@
            <enum>QGraphicsView::FullViewportUpdate</enum>
           </property>
           <property name="rubberBandSelectionMode">
-           <enum>Qt::ContainsItemShape</enum>
+           <enum>Qt::IntersectsItemShape</enum>
           </property>
          </widget>
         </item>
@@ -247,5 +253,38 @@
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>buttonNext</sender>
+   <signal>clicked()</signal>
+   <receiver>treeView</receiver>
+   <slot>expandAll()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>520</x>
+     <y>66</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>138</x>
+     <y>188</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonPrevious</sender>
+   <signal>clicked()</signal>
+   <receiver>treeView</receiver>
+   <slot>collapseAll()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>50</x>
+     <y>66</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>138</x>
+     <y>188</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
