@@ -64,6 +64,8 @@ void SssSQtICmainWindow::initTreeView() {
 
 	// setup file-system-model
 
+	this->oCurrentSelectedIndex = QModelIndex();
+
 	// show files and folders that do not match name filter
 	// so we can still change directories
 	this->pFSM->setNameFilterDisables(true);
@@ -101,10 +103,13 @@ void SssSQtICmainWindow::initTreeView() {
 	} // if found at least one valid path
 
 	// connect signals and slots
-	connect(this->pUI->treeView, SIGNAL(clicked(QModelIndex)), this,
-			SLOT(onClick(QModelIndex)));
+	//connect(this->pUI->treeView, SIGNAL(clicked(QModelIndex)), this,
+		//	SLOT(onClick(QModelIndex)));
 	connect(this->pUI->treeView, SIGNAL(doubleClicked(QModelIndex)),
 			this, SLOT(onDoubleClick(QModelIndex)));
+	connect(this->pUI->treeView->selectionModel(),
+			SIGNAL(currentChanged(QModelIndex, QModelIndex)),
+			this, SLOT(onTreeSelectionChanged(QModelIndex, QModelIndex)));
 
 } // initTreeView
 
@@ -209,6 +214,7 @@ void SssSQtICmainWindow::openPath(const QString &sPath) {
 } // openPath
 
 
+// these two can probably go too as I now have something working
 void SssSQtICmainWindow::opened(const QString &newPath) {
 	qDebug() << "opened" << newPath;
 
@@ -221,6 +227,7 @@ void SssSQtICmainWindow::opened2(const QString &path) {
 } // opened2
 
 
+// this is no longer required
 void SssSQtICmainWindow::onClick(QModelIndex index) {
 	//qDebug() << "onClick" << index << this->pFSM->filePath(index);
 
@@ -232,6 +239,27 @@ void SssSQtICmainWindow::onClick(QModelIndex index) {
 	this->loadImage(this->pFSM->filePath(index));
 
 } // onClick
+
+
+void SssSQtICmainWindow::onTreeSelectionChanged(const QModelIndex &current, const QModelIndex &previous) {
+	//qDebug() << "onTreeSelectionChanged" << current << previous;
+
+	// we can ignore if both current and previous is same row
+	if (current.row() == previous.row()) return;
+
+	// we can ignore directories
+	if (this->pFSM->isDir(current)) return;
+
+	//qDebug() << "isFile";
+	//TODO: ? check if same? If there is only one image, this may be the only way to save it. Maybe it's best anyway to simply save at each action.
+
+	// this may generate unknown behaviour if the new selection is not a valid image
+	this->oCurrentSelectedIndex = current;
+
+	// attempt to load the currently selected item
+	this->loadImage(this->pFSM->filePath(current));
+
+} // onTreeSelectionChanged
 
 
 void SssSQtICmainWindow::onDoubleClick(QModelIndex index) {
@@ -248,7 +276,15 @@ void SssSQtICmainWindow::onDoubleClick(QModelIndex index) {
 
 
 void SssSQtICmainWindow::on_buttonPrevious_clicked() {
-	qDebug() << "prev";
+	//qDebug() << "prev";
+
+	QModelIndex previousIndex = this->pUI->treeView->indexAbove(
+									this->oCurrentSelectedIndex);
+
+	//TODO: check both prev and next on change to disable buttons
+	if (!previousIndex.isValid()) return;
+
+	this->pUI->treeView->setCurrentIndex(previousIndex);
 
 } // on_buttonPrevious_clicked
 
@@ -272,9 +308,15 @@ void SssSQtICmainWindow::on_buttonRotateCW_clicked() {
 
 
 void SssSQtICmainWindow::on_buttonNext_clicked() {
-	qDebug() << "next";
+	//qDebug() << "next";
 
-	//this->pUI->treeView->
+	QModelIndex nextIndex = this->pUI->treeView->indexBelow(
+								this->oCurrentSelectedIndex);
+
+	//TODO: check both prev and next on change to disable buttons
+	if (!nextIndex.isValid()) return;
+
+	this->pUI->treeView->setCurrentIndex(nextIndex);
 
 } // on_buttonNext_clicked
 
@@ -325,3 +367,21 @@ void SssSQtICmainWindow::resizeEvent(QResizeEvent *event) {
 	this->updateGraphicsView();
 
 } // resizeEvent
+
+
+void SssSQtICmainWindow::on_checkBoxExpandAll_stateChanged(int iState) {
+	//qDebug() << "on_checkBoxExpandAll_stateChanged" << iState;
+
+	if (0 == iState) {
+
+		// not checked -> collapse
+		this->pUI->treeView->collapseAll();
+
+	} else {
+
+		// checked or mixed -> expand all
+		this->pUI->treeView->expandAll();
+
+	} // switch sate
+
+} // on_checkBoxExpandAll_stateChanged

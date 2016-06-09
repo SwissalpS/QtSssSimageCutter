@@ -25,6 +25,7 @@ private:
 	QGraphicsScene *pGS;
 	QImage *pCurrentImage;
 	QString *sPathFileCurrent;
+	QModelIndex oCurrentSelectedIndex;
 	QGraphicsPixmapItem *pGPI;
 
 	bool bImageChanged;
@@ -51,6 +52,7 @@ private slots:
 	void opened(const QString &newPath);
 	void opened2(const QString &path);
 	void onClick(QModelIndex index);
+	void onTreeSelectionChanged(const QModelIndex &current, const QModelIndex &previous);
 	void onDoubleClick(QModelIndex index);
 
 	void on_buttonPrevious_clicked();
@@ -59,6 +61,8 @@ private slots:
 	void on_buttonRotateCW_clicked();
 	void on_buttonNext_clicked();
 	void on_graphicsView_rubberBandChanged(const QRect &viewportRect, const QPointF &fromScenePoint, const QPointF &toScenePoint);
+
+	void on_checkBoxExpandAll_stateChanged(int iState);
 
 public slots:
 	void loadImage(const QString &sPathFile);
