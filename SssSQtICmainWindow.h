@@ -28,15 +28,20 @@ private:
 	QRectF *pRubberSelection;
 	QModelIndex oCurrentSelectedIndex;
 	QPen oPenCropLines;
+	QPen oPenCropBoxOutline;
+	QBrush oBrushCropBoxFill;
 	QGraphicsLineItem *pGLBottom;
 	QGraphicsLineItem *pGLLeft;
 	QGraphicsLineItem *pGLRight;
 	QGraphicsLineItem *pGLTop;
+	QGraphicsRectItem *pGRBottom;
+	QGraphicsRectItem *pGRLeft;
+	QGraphicsRectItem *pGRRight;
+	QGraphicsRectItem *pGRTop;
 	QGraphicsPixmapItem *pGPI;
 
 	bool bShowingCrop;
 	bool bImageChanged;
-	int iRotation;
 
 	void initActions();
 	void initGraphicsView();

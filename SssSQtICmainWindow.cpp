@@ -17,10 +17,16 @@ SssSQtICmainWindow::SssSQtICmainWindow(QWidget *parent) :
 	sPathFileCurrent(0),
 	pRubberSelection(new QRectF),
 	oPenCropLines(QPen(QBrush(Qt::red, Qt::SolidPattern), 3.0)),
+	oPenCropBoxOutline(QPen(Qt::NoPen)),
+	oBrushCropBoxFill(QBrush(Qt::gray, Qt::DiagCrossPattern)),
 	pGLBottom(0),
 	pGLLeft(0),
 	pGLRight(0),
 	pGLTop(0),
+	pGRBottom(0),
+	pGRLeft(0),
+	pGRRight(0),
+	pGRTop(0),
 	pGPI(0),
 	bShowingCrop(false),
 	bImageChanged(false) {
@@ -38,13 +44,26 @@ SssSQtICmainWindow::SssSQtICmainWindow(QWidget *parent) :
 
 SssSQtICmainWindow::~SssSQtICmainWindow() {
 
-	delete pUI;
+	delete this->pCurrentImage;
+	delete this->pRubberSelection;
+	delete this->pGLBottom;
+	delete this->pGLLeft;
+	delete this->pGLRight;
+	delete this->pGLTop;
+	delete this->pGRBottom;
+	delete this->pGRLeft;
+	delete this->pGRRight;
+	delete this->pGRTop;
+	delete this->pGPI;
+	delete this->pGS;
+	delete this->pFSM;
+	delete this->pUI;
 
 } // __destructor
 
 
 void SssSQtICmainWindow::initActions() {
-	qDebug() << "initActions";
+	//qDebug() << "initActions";
 
 	QAction *pAO = this->pUI->action_Open;
 	pAO->setStatusTip(tr("Open a Folder"));
@@ -66,7 +85,7 @@ void SssSQtICmainWindow::initGraphicsView() {
 
 
 void SssSQtICmainWindow::initTreeView() {
-	qDebug() << "initTreeView";
+	//qDebug() << "initTreeView";
 
 	// setup file-system-model
 
@@ -192,6 +211,20 @@ void SssSQtICmainWindow::rubberReleased() {
 	fY1 = oRectRubber.top();
 	fY2 = oRectRubber.bottom();
 
+	// add shading boxes
+	this->pGRTop = this->pGS->addRect(0.0, 0.0, fRight, fY1,
+									  this->oPenCropBoxOutline,
+									  this->oBrushCropBoxFill);
+	this->pGRBottom = this->pGS->addRect(0.0, fY2, fRight, fBottom - fY2,
+										 this->oPenCropBoxOutline,
+										 this->oBrushCropBoxFill);
+	this->pGRLeft = this->pGS->addRect(0.0, fY1, fX1, fY2 - fY1,
+									   this->oPenCropBoxOutline,
+									   this->oBrushCropBoxFill);
+	this->pGRRight = this->pGS->addRect(fX2, fY1, fRight - fX2, fY2 - fY1,
+										this->oPenCropBoxOutline,
+										this->oBrushCropBoxFill);
+
 	// add horizontal lines
 	this->pGLTop = this->pGS->addLine(0, fY1, fRight, fY1,
 									  this->oPenCropLines);
@@ -248,7 +281,6 @@ void SssSQtICmainWindow::saveAndDestroyImage() {
 	} // if have an image path
 
 	this->bImageChanged = false;
-	this->iRotation = 0;
 
 } // saveAndDestroyImage
 
@@ -258,8 +290,6 @@ void SssSQtICmainWindow::updateGraphicsView() {
 
 	this->pUI->graphicsView->fitInView(
 				this->pGS->sceneRect(), Qt::KeepAspectRatio);
-
-	//this->pUI->graphicsView->fitInView(
 	//			this->pGS->itemsBoundingRect(), Qt::KeepAspectRatio);
 
 } // updateGraphicsView
@@ -313,7 +343,7 @@ void SssSQtICmainWindow::onMenuOpen() {
 
 
 void SssSQtICmainWindow::onMenuQuit() {
-	qDebug() << "quit";
+	//qDebug() << "quit";
 
 	QApplication::quit();
 
@@ -479,18 +509,9 @@ void SssSQtICmainWindow::on_graphicsView_rubberBandChanged(const QRect &viewport
 	// destroy old selection
 	delete this->pRubberSelection; this->pRubberSelection = 0;
 
-	// determine where the selection started
-	if (fromScenePoint.x() < toScenePoint.x()) {
-
-		this->pRubberSelection = new QRectF(fromScenePoint, toScenePoint);
-
-	} else {
-
-		this->pRubberSelection = new QRectF(toScenePoint, fromScenePoint);
-
-	} // if started top-left or bottom-right
-
-	//qDebug() << "selection" << this->pRubberSelection << fromScenePoint << toScenePoint;
+	// normalize rect
+	QRectF oRect(fromScenePoint, toScenePoint);
+	this->pRubberSelection = new QRectF(oRect.normalized());
 
 } // on_graphicsView_rubberBandChanged
 
@@ -537,6 +558,11 @@ void SssSQtICmainWindow::removeCropMarker() {
 		delete this->pGLLeft; this->pGLLeft = 0;
 		delete this->pGLRight; this->pGLRight = 0;
 		delete this->pGLTop; this->pGLTop = 0;
+
+		delete this->pGRBottom; this->pGRBottom = 0;
+		delete this->pGRLeft; this->pGRLeft = 0;
+		delete this->pGRRight; this->pGRRight = 0;
+		delete this->pGRTop; this->pGRTop = 0;
 
 	} // if got crop lines
 
