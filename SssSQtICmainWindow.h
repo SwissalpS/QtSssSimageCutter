@@ -25,20 +25,33 @@ private:
 	QGraphicsScene *pGS;
 	QImage *pCurrentImage;
 	QString *sPathFileCurrent;
+	QRectF *pRubberSelection;
 	QModelIndex oCurrentSelectedIndex;
+	QPen oPenCropLines;
+	QGraphicsLineItem *pGLBottom;
+	QGraphicsLineItem *pGLLeft;
+	QGraphicsLineItem *pGLRight;
+	QGraphicsLineItem *pGLTop;
 	QGraphicsPixmapItem *pGPI;
 
+	bool bShowingCrop;
 	bool bImageChanged;
+	int iRotation;
 
 	void initActions();
 	void initGraphicsView();
 	void initTreeView();
 
+	QRectF rubberRectNormalized();
+
 protected:
+	void rotateImage(qreal fAngle);
+	void rubberReleased();
 	void saveImage();
 	void saveAndDestroyImage();
 	void updateGraphicsView();
 	void updateLandscapeIndicator();
+	void updatePixmap();
 
 	// events
 	void contextMenuEvent(QContextMenuEvent *event);
@@ -66,6 +79,7 @@ private slots:
 
 public slots:
 	void loadImage(const QString &sPathFile);
+	void removeCropMarker();
 
 };
 

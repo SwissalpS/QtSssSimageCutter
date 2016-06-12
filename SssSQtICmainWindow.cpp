@@ -7,6 +7,7 @@
 #include <qgraphicsitem.h>
 #include <QStandardPaths>
 
+
 SssSQtICmainWindow::SssSQtICmainWindow(QWidget *parent) :
 	QMainWindow(parent),
 	pUI(new Ui::SssSQtICmainWindow),
@@ -14,7 +15,14 @@ SssSQtICmainWindow::SssSQtICmainWindow(QWidget *parent) :
 	pGS(new QGraphicsScene),
 	pCurrentImage(0),
 	sPathFileCurrent(0),
+	pRubberSelection(new QRectF),
+	oPenCropLines(QPen(QBrush(Qt::red, Qt::SolidPattern), 3.0)),
+	pGLBottom(0),
+	pGLLeft(0),
+	pGLRight(0),
+	pGLTop(0),
 	pGPI(0),
+	bShowingCrop(false),
 	bImageChanged(false) {
 
 	this->pUI->setupUi(this);
@@ -52,9 +60,7 @@ void SssSQtICmainWindow::initActions() {
 void SssSQtICmainWindow::initGraphicsView() {
 	//qDebug() << "initGraphicsView";
 
-	//this->pGS->setSceneRect(this->pUI->graphicsView->rect());
 	this->pUI->graphicsView->setScene(this->pGS);
-	//this->pUI->graphicsView->setResizeAnchor(QGraphicsView::NoAnchor);
 
 } // initGraphicsView
 
@@ -114,8 +120,99 @@ void SssSQtICmainWindow::initTreeView() {
 } // initTreeView
 
 
+QRectF SssSQtICmainWindow::rubberRectNormalized() {
+	//qDebug() << "rubberRectNormalized";
+
+	QRectF oRectScene = this->pGS->sceneRect();
+	qreal fBottom, fRight, fX1, fX2, fY1, fY2;
+	fBottom = oRectScene.bottom();
+	fRight = oRectScene.right();
+
+	// read coordinates from rubber
+	fX1 = this->pRubberSelection->left();
+	fX2 = this->pRubberSelection->right();
+	fY1 = this->pRubberSelection->top();
+	fY2 = this->pRubberSelection->bottom();
+
+	// adjust overflows
+	if (fX1 > fRight) fX1 = fRight;
+	if (fX2 > fRight) fX2 = fRight;
+	if (fY1 > fBottom) fY1 = fBottom;
+	if (fY2 > fBottom) fY2 = fBottom;
+
+	// adjust underflows
+	if (0 > fX1) fX1 = 0;
+	if (0 > fX2) fX2 = 0;
+	if (0 > fY1) fY1 = 0;
+	if (0 > fY2) fY2 = 0;
+
+	return QRectF(QPointF(fX1, fY1), QPointF(fX2, fY2));
+
+} // rubberRectNormalized
+
+
+void SssSQtICmainWindow::rotateImage(qreal fAngle) {
+	//qDebug() << "rotateImage" << fAngle;
+
+	if (!this->pCurrentImage) return;
+
+	this->bImageChanged = true;
+
+	this->removeCropMarker();
+
+	QTransform oTransform;
+	oTransform.rotate(fAngle);
+	this->pCurrentImage = new QImage(this->pCurrentImage->transformed(oTransform));
+
+	this->updatePixmap();
+
+	this->updateGraphicsView();
+	this->updateLandscapeIndicator();
+
+} // rotateImage
+
+
+void SssSQtICmainWindow::rubberReleased() {
+	//qDebug() << "rubber released";
+
+	this->removeCropMarker();
+
+	// show rubber
+	this->bShowingCrop = true;
+
+	QRectF oRectRubber = this->rubberRectNormalized();
+	QRectF oRectScene = this->pGS->sceneRect();
+	qreal fBottom, fRight, fX1, fX2, fY1, fY2;
+	fBottom = oRectScene.bottom();
+	fRight = oRectScene.right();
+
+	// read coordinates from rubber
+	fX1 = oRectRubber.left();
+	fX2 = oRectRubber.right();
+	fY1 = oRectRubber.top();
+	fY2 = oRectRubber.bottom();
+
+	// add horizontal lines
+	this->pGLTop = this->pGS->addLine(0, fY1, fRight, fY1,
+									  this->oPenCropLines);
+	this->pGLBottom = this->pGS->addLine(0, fY2, fRight, fY2,
+										 this->oPenCropLines);
+
+	// vertical lines
+	this->pGLLeft = this->pGS->addLine(fX1, 0, fX1, fBottom,
+									   this->oPenCropLines);
+	this->pGLRight = this->pGS->addLine(fX2, 0, fX2, fBottom,
+										this->oPenCropLines);
+
+} // rubberReleased
+
+
 void SssSQtICmainWindow::saveImage() {
-	qDebug() << "TODO: saveImage";
+	//qDebug() << "saveImage";
+
+	if (!this->pCurrentImage) return;
+
+	this->pCurrentImage->save(*this->sPathFileCurrent);
 
 } // saveImage
 
@@ -150,6 +247,9 @@ void SssSQtICmainWindow::saveAndDestroyImage() {
 
 	} // if have an image path
 
+	this->bImageChanged = false;
+	this->iRotation = 0;
+
 } // saveAndDestroyImage
 
 
@@ -158,6 +258,9 @@ void SssSQtICmainWindow::updateGraphicsView() {
 
 	this->pUI->graphicsView->fitInView(
 				this->pGS->sceneRect(), Qt::KeepAspectRatio);
+
+	//this->pUI->graphicsView->fitInView(
+	//			this->pGS->itemsBoundingRect(), Qt::KeepAspectRatio);
 
 } // updateGraphicsView
 
@@ -171,6 +274,24 @@ void SssSQtICmainWindow::updateLandscapeIndicator() {
 				this->pCurrentImage->width() > this->pCurrentImage->height());
 
 } // updateLandscapeIndicator
+
+
+void SssSQtICmainWindow::updatePixmap() {
+	//qDebug() << "updatePixmap";
+
+	if (!this->pCurrentImage) return;
+
+	if (this->pGPI) {
+
+		delete this->pGPI; this->pGPI = 0;
+
+	} // if have already loaded an image
+
+	this->pGPI = new QGraphicsPixmapItem(QPixmap::fromImage(*this->pCurrentImage));
+	this->pGS->addItem(this->pGPI);
+	this->pGS->setSceneRect(this->pCurrentImage->rect());
+
+} // updatePixmap
 
 
 void SssSQtICmainWindow::contextMenuEvent(QContextMenuEvent *event) {
@@ -290,19 +411,42 @@ void SssSQtICmainWindow::on_buttonPrevious_clicked() {
 
 
 void SssSQtICmainWindow::on_buttonRotateCCW_clicked() {
-	qDebug() << "CCW";
+	//qDebug() << "CCW";
+
+	this->rotateImage(-90);
 
 } // on_buttonRotateCCW_clicked
 
 
 void SssSQtICmainWindow::on_buttonCrop_clicked() {
-	qDebug() << "crop";
+	//qDebug() << "crop";
+
+	if (!this->pCurrentImage) return;
+	if (!this->bShowingCrop) return;
+
+	this->bImageChanged = true;
+
+	// fetch normalized rubber rect
+	QRect oRectRubber = this->rubberRectNormalized().toRect();
+
+	this->removeCropMarker();
+
+	// crop image
+	QImage oImageCropped = this->pCurrentImage->copy(oRectRubber);
+	this->pCurrentImage = new QImage(oImageCropped);
+
+	this->updatePixmap();
+
+	this->updateGraphicsView();
+	this->updateLandscapeIndicator();
 
 } // on_buttonCrop_clicked
 
 
 void SssSQtICmainWindow::on_buttonRotateCW_clicked() {
-	qDebug() << "rCW";
+	//qDebug() << "rCW";
+
+	this->rotateImage(90);
 
 } // on_buttonRotateCW_clicked
 
@@ -322,13 +466,39 @@ void SssSQtICmainWindow::on_buttonNext_clicked() {
 
 
 void SssSQtICmainWindow::on_graphicsView_rubberBandChanged(const QRect &viewportRect, const QPointF &fromScenePoint, const QPointF &toScenePoint) {
-	qDebug() << "rubber" << viewportRect << fromScenePoint << toScenePoint;
+	//qDebug() << "rubber" << viewportRect << fromScenePoint << toScenePoint;
+
+	if (viewportRect.isNull()) {
+
+		this->rubberReleased();
+
+		return;
+
+	} // if null -> aka released
+
+	// destroy old selection
+	delete this->pRubberSelection; this->pRubberSelection = 0;
+
+	// determine where the selection started
+	if (fromScenePoint.x() < toScenePoint.x()) {
+
+		this->pRubberSelection = new QRectF(fromScenePoint, toScenePoint);
+
+	} else {
+
+		this->pRubberSelection = new QRectF(toScenePoint, fromScenePoint);
+
+	} // if started top-left or bottom-right
+
+	//qDebug() << "selection" << this->pRubberSelection << fromScenePoint << toScenePoint;
 
 } // on_graphicsView_rubberBandChanged
 
 
 void SssSQtICmainWindow::loadImage(const QString &sPathFile) {
 	//qDebug() << "loadImage" << sPathFile;
+
+	this->removeCropMarker();
 
 	QImage oImage(sPathFile);
 
@@ -346,16 +516,31 @@ void SssSQtICmainWindow::loadImage(const QString &sPathFile) {
 
 	this->sPathFileCurrent = new QString(sPathFile);
 	this->pCurrentImage = new QImage(sPathFile);
-	this->pGPI = new QGraphicsPixmapItem(QPixmap::fromImage(*this->pCurrentImage));
-	this->pGS->addItem(this->pGPI);
-	//this->pUI->graphicsView->centerOn(this->pGPI);
-	//this->pUI->graphicsView->fitInView(this->pGPI);
-	this->pGS->setSceneRect(this->pCurrentImage->rect());
+
+	this->updatePixmap();
 
 	this->updateGraphicsView();
 	this->updateLandscapeIndicator();
 
 } // loadImage
+
+
+void SssSQtICmainWindow::removeCropMarker() {
+	//qDebug() << "removeCropMarker";
+
+	this->bShowingCrop = false;
+
+	if (this->pGLBottom) {
+
+		//qDebug() << "got bottom";
+		delete this->pGLBottom; this->pGLBottom = 0;
+		delete this->pGLLeft; this->pGLLeft = 0;
+		delete this->pGLRight; this->pGLRight = 0;
+		delete this->pGLTop; this->pGLTop = 0;
+
+	} // if got crop lines
+
+} // removeCropMarker
 
 
 void SssSQtICmainWindow::resizeEvent(QResizeEvent *event) {
