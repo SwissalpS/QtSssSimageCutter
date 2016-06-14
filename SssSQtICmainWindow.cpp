@@ -300,8 +300,30 @@ void SssSQtICmainWindow::updateLandscapeIndicator() {
 
 	if (!this->pCurrentImage) return;
 
-	this->pUI->radioButtonIsLandscape->setChecked(
-				this->pCurrentImage->width() > this->pCurrentImage->height());
+	int iHeight = this->pCurrentImage->height();
+	int iWidth = this->pCurrentImage->width();
+	QRadioButton *pRadio = this->pUI->radioButtonIsLandscape;
+
+	if (iWidth < iHeight) {
+
+		pRadio->setChecked(false);
+
+	} else {
+
+		pRadio->setChecked(true);
+
+	} // if not landscape
+
+	// adapt label in case we have a square
+	if (iWidth == iHeight) {
+
+		pRadio->setText(tr("is square"));
+
+	} else {
+
+		pRadio->setText(tr("is landscape"));
+
+	} // if square or not
 
 } // updateLandscapeIndicator
 
@@ -325,7 +347,8 @@ void SssSQtICmainWindow::updatePixmap() {
 
 
 void SssSQtICmainWindow::contextMenuEvent(QContextMenuEvent *event) {
-	qDebug() << "contextMenuEvent" << event;
+	//qDebug() << "contextMenuEvent" << event;
+	Q_UNUSED(event);
 
 } // contextMenuEvent
 
@@ -596,3 +619,20 @@ void SssSQtICmainWindow::on_checkBoxExpandAll_stateChanged(int iState) {
 	} // switch sate
 
 } // on_checkBoxExpandAll_stateChanged
+
+
+void SssSQtICmainWindow::on_actionDelete_triggered() {
+	//qDebug() << "on_actionDelete_triggered";
+
+	if (!this->pCurrentImage) return;
+
+	// delete forever, no trash
+	QFile::remove(*this->sPathFileCurrent);
+
+	// avoid saving after having just been deleted
+	this->bImageChanged = false;
+
+	// remove pointers etc.
+	this->saveAndDestroyImage();
+
+} // on_actionDelete_triggered

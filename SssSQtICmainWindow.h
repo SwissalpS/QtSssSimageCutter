@@ -82,6 +82,8 @@ private slots:
 
 	void on_checkBoxExpandAll_stateChanged(int iState);
 
+	void on_actionDelete_triggered();
+
 public slots:
 	void loadImage(const QString &sPathFile);
 	void removeCropMarker();
