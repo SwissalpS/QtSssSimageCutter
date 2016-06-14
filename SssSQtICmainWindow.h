@@ -67,8 +67,6 @@ private slots:
 	void onMenuQuit();
 	void openPath(const QString &sPath);
 
-	void opened(const QString &newPath);
-	void opened2(const QString &path);
 	void onClick(QModelIndex index);
 	void onTreeSelectionChanged(const QModelIndex &current, const QModelIndex &previous);
 	void onDoubleClick(QModelIndex index);

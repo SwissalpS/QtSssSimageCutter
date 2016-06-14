@@ -73,6 +73,8 @@ void SssSQtICmainWindow::initActions() {
 	pAQ->setStatusTip(tr("Quit Application"));
 	connect(pAQ, SIGNAL(triggered()), this, SLOT(onMenuQuit()));
 
+	// delete button is connected with .ui
+
 } // initActions
 
 
@@ -100,17 +102,17 @@ void SssSQtICmainWindow::initTreeView() {
 
 	this->pFSM->setRootPath("/home /root /mnt");
 
-	// these did not work so I set large width in designer
-	this->pFSM->removeColumn(1); // size
-	this->pFSM->removeColumn(2); // type
-	this->pFSM->removeColumn(3); // date
+	// these did not work so I set large width in ui-designer
+	//this->pFSM->removeColumn(1); // size
+	//this->pFSM->removeColumn(2); // type
+	//this->pFSM->removeColumn(3); // date
 
 	// filter what to show
 	this->pFSM->setFilter(QDir::NoDotAndDotDot | QDir::AllEntries);
 
 	// filter out anything that isn't an image
 	QStringList lFilters;
-	lFilters << "*.png" << "*.jpg" << "*.jpeg" << "*.bmp" << "*.gif"
+	lFilters << "*.png" << "*.jpg" << "*.jpeg" << "*.bmp" // can't save << "*.gif"
 			 << "*.pbm" << "*.pgm" << "*.ppm" << "*.xbm" << "*.xpm" << "*.svg";
 	this->pFSM->setNameFilters(lFilters);
 
@@ -211,6 +213,25 @@ void SssSQtICmainWindow::rubberReleased() {
 	fY1 = oRectRubber.top();
 	fY2 = oRectRubber.bottom();
 
+	// prepare status bar message
+	QString sStatus;
+	if (oRectRubber.height() < oRectRubber.width()) {
+
+		sStatus = tr("crop is landscape");
+
+	} else if (oRectRubber.height() == oRectRubber.width()) {
+
+		sStatus = tr("crop is square");
+
+	} else {
+
+		sStatus = tr("crop is portrait");
+
+	} // if crop has landscape, portrait or square ratio
+
+	// show the message about ratio
+	this->pUI->statusBar->showMessage(sStatus);
+
 	// add shading boxes
 	this->pGRTop = this->pGS->addRect(0.0, 0.0, fRight, fY1,
 									  this->oPenCropBoxOutline,
@@ -245,6 +266,7 @@ void SssSQtICmainWindow::saveImage() {
 
 	if (!this->pCurrentImage) return;
 
+	//TODO: inspect image format and apply quality (some have 0 to 1 others 1 to 100
 	this->pCurrentImage->save(*this->sPathFileCurrent);
 
 } // saveImage
@@ -290,7 +312,7 @@ void SssSQtICmainWindow::updateGraphicsView() {
 
 	this->pUI->graphicsView->fitInView(
 				this->pGS->sceneRect(), Qt::KeepAspectRatio);
-	//			this->pGS->itemsBoundingRect(), Qt::KeepAspectRatio);
+	//			this->pGS->itemsBoundingRect(), Qt::KeepAspectRatio); // <-- slower
 
 } // updateGraphicsView
 
@@ -388,20 +410,7 @@ void SssSQtICmainWindow::openPath(const QString &sPath) {
 } // openPath
 
 
-// these two can probably go too as I now have something working
-void SssSQtICmainWindow::opened(const QString &newPath) {
-	qDebug() << "opened" << newPath;
-
-} // opened
-
-
-void SssSQtICmainWindow::opened2(const QString &path) {
-	qDebug() << "opened2" << path;
-
-} // opened2
-
-
-// this is no longer required
+// this is no longer required, may need it again though, renamed...
 void SssSQtICmainWindow::onClick(QModelIndex index) {
 	//qDebug() << "onClick" << index << this->pFSM->filePath(index);
 
@@ -419,6 +428,7 @@ void SssSQtICmainWindow::onTreeSelectionChanged(const QModelIndex &current, cons
 	//qDebug() << "onTreeSelectionChanged" << current << previous;
 
 	// we can ignore if both current and previous is same row
+	// this can be excluded with setting in ui-designer
 	if (current.row() == previous.row()) return;
 
 	// we can ignore directories
