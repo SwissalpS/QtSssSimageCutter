@@ -6,6 +6,7 @@
 #include <QFileDialog>
 #include <qgraphicsitem.h>
 #include <QStandardPaths>
+#include <QImageWriter>
 
 
 
@@ -105,7 +106,7 @@ void QtSssSiCmainWindow::initTreeView() {
 	// don't allow moving or deleting
 	this->pFSM->setReadOnly(true);
 
-	this->pFSM->setRootPath("/home /root /mnt");
+	this->pFSM->setRootPath("");
 
 	// these did not work so I set large width in ui-designer
 	//this->pFSM->removeColumn(1); // size
@@ -117,8 +118,19 @@ void QtSssSiCmainWindow::initTreeView() {
 
 	// filter out anything that isn't an image
 	QStringList lFilters;
-	lFilters << "*.png" << "*.jpg" << "*.jpeg" << "*.bmp" // can't save << "*.gif"
-			 << "*.pbm" << "*.pgm" << "*.ppm" << "*.xbm" << "*.xpm" << "*.svg";
+	QList<QByteArray> lBA = QImageWriter::supportedImageFormats();
+
+	for(int i = 0; i < lBA.size(); ++i) {
+
+		QString str(lBA[i].constData());
+		lFilters << "*." + str;
+
+	} // loop all valid formats
+	//qDebug() << lFilters; //--> "*.bmp", "*.ico", "*.jpeg", "*.jpg", "*.pbm", "*.pgm", "*.png", "*.ppm", "*.tif", "*.tiff", "*.wbmp", "*.xbm", "*.xpm"
+
+	// documentation says: can't save << "*.gif" << "*.pbm" << "*.pgm"
+	// I'll trust the output of QImageWriter. This may be platform dependent?
+
 	this->pFSM->setNameFilters(lFilters);
 
 	// setup tree-view
@@ -271,8 +283,8 @@ void QtSssSiCmainWindow::saveImage() {
 
 	if (!this->pCurrentImage) return;
 
-	//TODO: inspect image format and apply quality (some have 0 to 1 others 1 to 100
-	this->pCurrentImage->save(*this->sPathFileCurrent);
+	this->pCurrentImage->save(*this->sPathFileCurrent, 0,
+							  this->pUI->sliderQuality->value());
 
 } // saveImage
 
