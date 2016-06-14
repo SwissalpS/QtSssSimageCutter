@@ -8,15 +8,15 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = SssSQtImageCutter
+TARGET = QtSssSimageCutter
 TEMPLATE = app
 
 
 SOURCES += main.cpp \
-    QtSssSiCmainWindow.cpp
+	QtSssSiCmainWindow.cpp
 
 HEADERS  += \
-    QtSssSiCmainWindow.h
+	QtSssSiCmainWindow.h
 
 FORMS    += \
-    QtSssSiCmainWindow.ui
+	QtSssSiCmainWindow.ui
