@@ -1,10 +1,10 @@
-#include "SssSQtICmainWindow.h"
+#include "QtSssSiCmainWindow.h"
 #include <QApplication>
 
 int main(int argc, char *argv[]) {
 
 	QApplication oApp(argc, argv);
-	SssSQtICmainWindow oMainWindow;
+	SwissalpS::QtSssSiC::QtSssSiCmainWindow oMainWindow;
 
 	oMainWindow.show();
 

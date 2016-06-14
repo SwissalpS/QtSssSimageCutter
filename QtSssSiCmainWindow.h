@@ -1,26 +1,38 @@
-#ifndef SSSSQTICMAINWINDOW_H
-#define SSSSQTICMAINWINDOW_H
+#ifndef QTSSSSICMAINWINDOW_H
+#define QTSSSSICMAINWINDOW_H
 
 #include <QMainWindow>
 #include <QFileSystemModel>
 #include <QGraphicsScene>
 
+
+
 namespace Ui {
 
-class SssSQtICmainWindow;
+
+
+class QtSssSiCmainWindow;
+
+
 
 } // namespace Ui
 
-class SssSQtICmainWindow : public QMainWindow
-{
+
+
+namespace SwissalpS { namespace QtSssSiC {
+
+
+
+class QtSssSiCmainWindow : public QMainWindow {
+
 	Q_OBJECT
 
 public:
-	explicit SssSQtICmainWindow(QWidget *parent = 0);
-	~SssSQtICmainWindow();
+	explicit QtSssSiCmainWindow(QWidget *parent = 0);
+	~QtSssSiCmainWindow();
 
 private:
-	Ui::SssSQtICmainWindow *pUI;
+	Ui::QtSssSiCmainWindow *pUI;
 	QFileSystemModel *pFSM;
 	QGraphicsScene *pGS;
 	QImage *pCurrentImage;
@@ -88,4 +100,10 @@ public slots:
 
 };
 
-#endif // SSSSQTICMAINWINDOW_H
+
+
+}	} // namespace SwissalpS::QtSssSiC
+
+
+
+#endif // QTSSSSICMAINWINDOW_H

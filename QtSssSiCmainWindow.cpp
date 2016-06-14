@@ -1,5 +1,5 @@
-#include "SssSQtICmainWindow.h"
-#include "ui_SssSQtICmainWindow.h"
+#include "QtSssSiCmainWindow.h"
+#include "ui_QtSssSiCmainWindow.h"
 
 #include <QDebug>
 #include <QDir>
@@ -8,9 +8,14 @@
 #include <QStandardPaths>
 
 
-SssSQtICmainWindow::SssSQtICmainWindow(QWidget *parent) :
+
+namespace SwissalpS { namespace QtSssSiC {
+
+
+
+QtSssSiCmainWindow::QtSssSiCmainWindow(QWidget *parent) :
 	QMainWindow(parent),
-	pUI(new Ui::SssSQtICmainWindow),
+	pUI(new Ui::QtSssSiCmainWindow),
 	pFSM(new QFileSystemModel),
 	pGS(new QGraphicsScene),
 	pCurrentImage(0),
@@ -42,7 +47,7 @@ SssSQtICmainWindow::SssSQtICmainWindow(QWidget *parent) :
 } // __constructor
 
 
-SssSQtICmainWindow::~SssSQtICmainWindow() {
+QtSssSiCmainWindow::~QtSssSiCmainWindow() {
 
 	delete this->pCurrentImage;
 	delete this->pRubberSelection;
@@ -62,7 +67,7 @@ SssSQtICmainWindow::~SssSQtICmainWindow() {
 } // __destructor
 
 
-void SssSQtICmainWindow::initActions() {
+void QtSssSiCmainWindow::initActions() {
 	//qDebug() << "initActions";
 
 	QAction *pAO = this->pUI->action_Open;
@@ -78,7 +83,7 @@ void SssSQtICmainWindow::initActions() {
 } // initActions
 
 
-void SssSQtICmainWindow::initGraphicsView() {
+void QtSssSiCmainWindow::initGraphicsView() {
 	//qDebug() << "initGraphicsView";
 
 	this->pUI->graphicsView->setScene(this->pGS);
@@ -86,7 +91,7 @@ void SssSQtICmainWindow::initGraphicsView() {
 } // initGraphicsView
 
 
-void SssSQtICmainWindow::initTreeView() {
+void QtSssSiCmainWindow::initTreeView() {
 	//qDebug() << "initTreeView";
 
 	// setup file-system-model
@@ -141,7 +146,7 @@ void SssSQtICmainWindow::initTreeView() {
 } // initTreeView
 
 
-QRectF SssSQtICmainWindow::rubberRectNormalized() {
+QRectF QtSssSiCmainWindow::rubberRectNormalized() {
 	//qDebug() << "rubberRectNormalized";
 
 	QRectF oRectScene = this->pGS->sceneRect();
@@ -172,7 +177,7 @@ QRectF SssSQtICmainWindow::rubberRectNormalized() {
 } // rubberRectNormalized
 
 
-void SssSQtICmainWindow::rotateImage(qreal fAngle) {
+void QtSssSiCmainWindow::rotateImage(qreal fAngle) {
 	//qDebug() << "rotateImage" << fAngle;
 
 	if (!this->pCurrentImage) return;
@@ -193,7 +198,7 @@ void SssSQtICmainWindow::rotateImage(qreal fAngle) {
 } // rotateImage
 
 
-void SssSQtICmainWindow::rubberReleased() {
+void QtSssSiCmainWindow::rubberReleased() {
 	//qDebug() << "rubber released";
 
 	this->removeCropMarker();
@@ -261,7 +266,7 @@ void SssSQtICmainWindow::rubberReleased() {
 } // rubberReleased
 
 
-void SssSQtICmainWindow::saveImage() {
+void QtSssSiCmainWindow::saveImage() {
 	//qDebug() << "saveImage";
 
 	if (!this->pCurrentImage) return;
@@ -272,7 +277,7 @@ void SssSQtICmainWindow::saveImage() {
 } // saveImage
 
 
-void SssSQtICmainWindow::saveAndDestroyImage() {
+void QtSssSiCmainWindow::saveAndDestroyImage() {
 	//qDebug() << "saveAndDestroyImage";
 
 	if (this->bImageChanged) {
@@ -307,7 +312,7 @@ void SssSQtICmainWindow::saveAndDestroyImage() {
 } // saveAndDestroyImage
 
 
-void SssSQtICmainWindow::updateGraphicsView() {
+void QtSssSiCmainWindow::updateGraphicsView() {
 	//qDebug() << "updateGraphicsView";
 
 	this->pUI->graphicsView->fitInView(
@@ -317,7 +322,7 @@ void SssSQtICmainWindow::updateGraphicsView() {
 } // updateGraphicsView
 
 
-void SssSQtICmainWindow::updateLandscapeIndicator() {
+void QtSssSiCmainWindow::updateLandscapeIndicator() {
 	//qDebug() << "updateLandscapeIndicator";
 
 	if (!this->pCurrentImage) return;
@@ -350,7 +355,7 @@ void SssSQtICmainWindow::updateLandscapeIndicator() {
 } // updateLandscapeIndicator
 
 
-void SssSQtICmainWindow::updatePixmap() {
+void QtSssSiCmainWindow::updatePixmap() {
 	//qDebug() << "updatePixmap";
 
 	if (!this->pCurrentImage) return;
@@ -368,14 +373,14 @@ void SssSQtICmainWindow::updatePixmap() {
 } // updatePixmap
 
 
-void SssSQtICmainWindow::contextMenuEvent(QContextMenuEvent *event) {
+void QtSssSiCmainWindow::contextMenuEvent(QContextMenuEvent *event) {
 	//qDebug() << "contextMenuEvent" << event;
 	Q_UNUSED(event);
 
 } // contextMenuEvent
 
 
-void SssSQtICmainWindow::onMenuOpen() {
+void QtSssSiCmainWindow::onMenuOpen() {
 	//qDebug() << "onMenuOpen";
 
 	QString sPath = QFileDialog::getExistingDirectory(this,
@@ -387,7 +392,7 @@ void SssSQtICmainWindow::onMenuOpen() {
 } // onMenuOpen
 
 
-void SssSQtICmainWindow::onMenuQuit() {
+void QtSssSiCmainWindow::onMenuQuit() {
 	//qDebug() << "quit";
 
 	QApplication::quit();
@@ -395,7 +400,7 @@ void SssSQtICmainWindow::onMenuQuit() {
 } // onMenuQuit
 
 
-void SssSQtICmainWindow::openPath(const QString &sPath) {
+void QtSssSiCmainWindow::openPath(const QString &sPath) {
 	//qDebug() << "openPath" << sPath;
 
 	// no need to attempt if nothing given
@@ -411,7 +416,7 @@ void SssSQtICmainWindow::openPath(const QString &sPath) {
 
 
 // this is no longer required, may need it again though, renamed...
-void SssSQtICmainWindow::onClick(QModelIndex index) {
+void QtSssSiCmainWindow::onClick(QModelIndex index) {
 	//qDebug() << "onClick" << index << this->pFSM->filePath(index);
 
 	// we can ignore single-clicks on directories
@@ -424,7 +429,7 @@ void SssSQtICmainWindow::onClick(QModelIndex index) {
 } // onClick
 
 
-void SssSQtICmainWindow::onTreeSelectionChanged(const QModelIndex &current, const QModelIndex &previous) {
+void QtSssSiCmainWindow::onTreeSelectionChanged(const QModelIndex &current, const QModelIndex &previous) {
 	//qDebug() << "onTreeSelectionChanged" << current << previous;
 
 	// we can ignore if both current and previous is same row
@@ -446,7 +451,7 @@ void SssSQtICmainWindow::onTreeSelectionChanged(const QModelIndex &current, cons
 } // onTreeSelectionChanged
 
 
-void SssSQtICmainWindow::onDoubleClick(QModelIndex index) {
+void QtSssSiCmainWindow::onDoubleClick(QModelIndex index) {
 	//qDebug() << "onDoubleClick" << index << this->pFSM->filePath(index);
 
 	// we only treat directories for double click
@@ -459,7 +464,7 @@ void SssSQtICmainWindow::onDoubleClick(QModelIndex index) {
 } // onDoubleClick
 
 
-void SssSQtICmainWindow::on_buttonPrevious_clicked() {
+void QtSssSiCmainWindow::on_buttonPrevious_clicked() {
 	//qDebug() << "prev";
 
 	QModelIndex previousIndex = this->pUI->treeView->indexAbove(
@@ -473,7 +478,7 @@ void SssSQtICmainWindow::on_buttonPrevious_clicked() {
 } // on_buttonPrevious_clicked
 
 
-void SssSQtICmainWindow::on_buttonRotateCCW_clicked() {
+void QtSssSiCmainWindow::on_buttonRotateCCW_clicked() {
 	//qDebug() << "CCW";
 
 	this->rotateImage(-90);
@@ -481,7 +486,7 @@ void SssSQtICmainWindow::on_buttonRotateCCW_clicked() {
 } // on_buttonRotateCCW_clicked
 
 
-void SssSQtICmainWindow::on_buttonCrop_clicked() {
+void QtSssSiCmainWindow::on_buttonCrop_clicked() {
 	//qDebug() << "crop";
 
 	if (!this->pCurrentImage) return;
@@ -506,7 +511,7 @@ void SssSQtICmainWindow::on_buttonCrop_clicked() {
 } // on_buttonCrop_clicked
 
 
-void SssSQtICmainWindow::on_buttonRotateCW_clicked() {
+void QtSssSiCmainWindow::on_buttonRotateCW_clicked() {
 	//qDebug() << "rCW";
 
 	this->rotateImage(90);
@@ -514,7 +519,7 @@ void SssSQtICmainWindow::on_buttonRotateCW_clicked() {
 } // on_buttonRotateCW_clicked
 
 
-void SssSQtICmainWindow::on_buttonNext_clicked() {
+void QtSssSiCmainWindow::on_buttonNext_clicked() {
 	//qDebug() << "next";
 
 	QModelIndex nextIndex = this->pUI->treeView->indexBelow(
@@ -528,7 +533,7 @@ void SssSQtICmainWindow::on_buttonNext_clicked() {
 } // on_buttonNext_clicked
 
 
-void SssSQtICmainWindow::on_graphicsView_rubberBandChanged(const QRect &viewportRect, const QPointF &fromScenePoint, const QPointF &toScenePoint) {
+void QtSssSiCmainWindow::on_graphicsView_rubberBandChanged(const QRect &viewportRect, const QPointF &fromScenePoint, const QPointF &toScenePoint) {
 	//qDebug() << "rubber" << viewportRect << fromScenePoint << toScenePoint;
 
 	if (viewportRect.isNull()) {
@@ -549,7 +554,7 @@ void SssSQtICmainWindow::on_graphicsView_rubberBandChanged(const QRect &viewport
 } // on_graphicsView_rubberBandChanged
 
 
-void SssSQtICmainWindow::loadImage(const QString &sPathFile) {
+void QtSssSiCmainWindow::loadImage(const QString &sPathFile) {
 	//qDebug() << "loadImage" << sPathFile;
 
 	this->removeCropMarker();
@@ -579,7 +584,7 @@ void SssSQtICmainWindow::loadImage(const QString &sPathFile) {
 } // loadImage
 
 
-void SssSQtICmainWindow::removeCropMarker() {
+void QtSssSiCmainWindow::removeCropMarker() {
 	//qDebug() << "removeCropMarker";
 
 	this->bShowingCrop = false;
@@ -602,7 +607,7 @@ void SssSQtICmainWindow::removeCropMarker() {
 } // removeCropMarker
 
 
-void SssSQtICmainWindow::resizeEvent(QResizeEvent *event) {
+void QtSssSiCmainWindow::resizeEvent(QResizeEvent *event) {
 	//qDebug() << "resizeEvent";
 
 	//QWidget::resizeEvent(event);
@@ -613,7 +618,7 @@ void SssSQtICmainWindow::resizeEvent(QResizeEvent *event) {
 } // resizeEvent
 
 
-void SssSQtICmainWindow::on_checkBoxExpandAll_stateChanged(int iState) {
+void QtSssSiCmainWindow::on_checkBoxExpandAll_stateChanged(int iState) {
 	//qDebug() << "on_checkBoxExpandAll_stateChanged" << iState;
 
 	if (0 == iState) {
@@ -631,7 +636,7 @@ void SssSQtICmainWindow::on_checkBoxExpandAll_stateChanged(int iState) {
 } // on_checkBoxExpandAll_stateChanged
 
 
-void SssSQtICmainWindow::on_actionDelete_triggered() {
+void QtSssSiCmainWindow::on_actionDelete_triggered() {
 	//qDebug() << "on_actionDelete_triggered";
 
 	if (!this->pCurrentImage) return;
@@ -646,3 +651,7 @@ void SssSQtICmainWindow::on_actionDelete_triggered() {
 	this->saveAndDestroyImage();
 
 } // on_actionDelete_triggered
+
+
+
+}	} // namespace SwissalpS::QtSssSiC

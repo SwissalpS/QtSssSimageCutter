@@ -12,9 +12,11 @@ TARGET = SssSQtImageCutter
 TEMPLATE = app
 
 
-SOURCES += main.cpp\
-        SssSQtICmainWindow.cpp
+SOURCES += main.cpp \
+    QtSssSiCmainWindow.cpp
 
-HEADERS  += SssSQtICmainWindow.h
+HEADERS  += \
+    QtSssSiCmainWindow.h
 
-FORMS    += SssSQtICmainWindow.ui
+FORMS    += \
+    QtSssSiCmainWindow.ui
