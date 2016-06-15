@@ -13,10 +13,12 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp \
-	QtSssSiCmainWindow.cpp
+	QtSssSiCmainWindow.cpp \
+    QtSssSiCcropLine.cpp
 
 HEADERS  += \
-	QtSssSiCmainWindow.h
+	QtSssSiCmainWindow.h \
+    QtSssSiCcropLine.h
 
 FORMS    += \
 	QtSssSiCmainWindow.ui
