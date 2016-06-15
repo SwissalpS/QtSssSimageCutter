@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string> 0.2</string>
+   <string>QtSwissalpS Image Cropper 0.2</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <property name="sizePolicy">
