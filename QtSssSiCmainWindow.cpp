@@ -1,5 +1,6 @@
 #include "QtSssSiCmainWindow.h"
 #include "ui_QtSssSiCmainWindow.h"
+#include "QtSssSiCcropLine.h"
 
 #include <QDebug>
 #include <QDir>
@@ -7,6 +8,7 @@
 #include <qgraphicsitem.h>
 #include <QStandardPaths>
 #include <QImageWriter>
+#include <limits>
 
 
 
@@ -25,10 +27,10 @@ QtSssSiCmainWindow::QtSssSiCmainWindow(QWidget *parent) :
 	oPenCropLines(QPen(QBrush(Qt::red, Qt::SolidPattern), 3.0)),
 	oPenCropBoxOutline(QPen(Qt::NoPen)),
 	oBrushCropBoxFill(QBrush(Qt::gray, Qt::DiagCrossPattern)),
-	pGLBottom(0),
-	pGLLeft(0),
-	pGLRight(0),
-	pGLTop(0),
+	pCLBottom(new QtSssSiCcropLine(true)),
+	pCLLeft(new QtSssSiCcropLine(false)),
+	pCLRight(new QtSssSiCcropLine(false)),
+	pCLTop(new QtSssSiCcropLine(true)),
 	pGRBottom(0),
 	pGRLeft(0),
 	pGRRight(0),
@@ -52,10 +54,10 @@ QtSssSiCmainWindow::~QtSssSiCmainWindow() {
 
 	delete this->pCurrentImage;
 	delete this->pRubberSelection;
-	delete this->pGLBottom;
-	delete this->pGLLeft;
-	delete this->pGLRight;
-	delete this->pGLTop;
+	delete this->pCLBottom;
+	delete this->pCLLeft;
+	delete this->pCLRight;
+	delete this->pCLTop;
 	delete this->pGRBottom;
 	delete this->pGRLeft;
 	delete this->pGRRight;
@@ -87,7 +89,48 @@ void QtSssSiCmainWindow::initActions() {
 void QtSssSiCmainWindow::initGraphicsView() {
 	//qDebug() << "initGraphicsView";
 
+	// connect view and scene
 	this->pUI->graphicsView->setScene(this->pGS);
+
+	// connect moved-signals of corners
+
+	// connect moved-signals of lines
+	connect(this->pCLBottom, SIGNAL(wasMoved()), this, SLOT(cropLineMoved()));
+	connect(this->pCLLeft, SIGNAL(wasMoved()), this, SLOT(cropLineMoved()));
+	connect(this->pCLRight, SIGNAL(wasMoved()), this, SLOT(cropLineMoved()));
+	connect(this->pCLTop, SIGNAL(wasMoved()), this, SLOT(cropLineMoved()));
+
+	// add crop-corners to scene
+
+	// add crop-lines to scene
+	this->pGS->addItem(this->pCLBottom);
+	this->pGS->addItem(this->pCLLeft);
+	this->pGS->addItem(this->pCLRight);
+	this->pGS->addItem(this->pCLTop);
+
+	// create crop box instances
+	this->pGRTop = this->pGS->addRect(0.0, 0.0, 1.0, 1.0,
+									  this->oPenCropBoxOutline,
+									  this->oBrushCropBoxFill);
+	this->pGRBottom = this->pGS->addRect(0.0, 0.0, 1.0, 1.0,
+										 this->oPenCropBoxOutline,
+										 this->oBrushCropBoxFill);
+	this->pGRLeft = this->pGS->addRect(0.0, 0.0, 1.0, 1.0,
+									   this->oPenCropBoxOutline,
+									   this->oBrushCropBoxFill);
+	this->pGRRight = this->pGS->addRect(0.0, 0.0, 1.0, 1.0,
+										this->oPenCropBoxOutline,
+										this->oBrushCropBoxFill);
+
+	// put the boxes just bellow the crop-lines and corners
+	qreal iZ = std::numeric_limits<qreal>::max() -2;
+
+	this->pGRBottom->setZValue(iZ);
+	this->pGRLeft->setZValue(iZ);
+	this->pGRRight->setZValue(iZ);
+	this->pGRTop->setZValue(iZ);
+
+	this->hideCrop();
 
 } // initGraphicsView
 
@@ -166,7 +209,7 @@ QRectF QtSssSiCmainWindow::rubberRectNormalized() {
 	fBottom = oRectScene.bottom();
 	fRight = oRectScene.right();
 
-	// read coordinates from rubber
+	// read coordinates from selection
 	fX1 = this->pRubberSelection->left();
 	fX2 = this->pRubberSelection->right();
 	fY1 = this->pRubberSelection->top();
@@ -216,65 +259,14 @@ void QtSssSiCmainWindow::rubberReleased() {
 	// position the crop lines
 	this->updateCropLines();
 
+	// position the crop boxes
+	this->updateCropBoxes();
+
 	// show rubber
-	this->bShowingCrop = true;
+	this->showCrop();
 
-	QRectF oRectRubber = this->rubberRectNormalized();
-	QRectF oRectScene = this->pGS->sceneRect();
-	qreal fBottom, fRight, fX1, fX2, fY1, fY2;
-	fBottom = oRectScene.bottom();
-	fRight = oRectScene.right();
-
-	// read coordinates from rubber
-	fX1 = oRectRubber.left();
-	fX2 = oRectRubber.right();
-	fY1 = oRectRubber.top();
-	fY2 = oRectRubber.bottom();
-
-	// prepare status bar message
-	QString sStatus;
-	if (oRectRubber.height() < oRectRubber.width()) {
-
-		sStatus = tr("crop is landscape");
-
-	} else if (oRectRubber.height() == oRectRubber.width()) {
-
-		sStatus = tr("crop is square");
-
-	} else {
-
-		sStatus = tr("crop is portrait");
-
-	} // if crop has landscape, portrait or square ratio
-
-	// show the message about ratio
-	this->pUI->statusBar->showMessage(sStatus);
-
-	// add shading boxes
-	this->pGRTop = this->pGS->addRect(0.0, 0.0, fRight, fY1,
-									  this->oPenCropBoxOutline,
-									  this->oBrushCropBoxFill);
-	this->pGRBottom = this->pGS->addRect(0.0, fY2, fRight, fBottom - fY2,
-										 this->oPenCropBoxOutline,
-										 this->oBrushCropBoxFill);
-	this->pGRLeft = this->pGS->addRect(0.0, fY1, fX1, fY2 - fY1,
-									   this->oPenCropBoxOutline,
-									   this->oBrushCropBoxFill);
-	this->pGRRight = this->pGS->addRect(fX2, fY1, fRight - fX2, fY2 - fY1,
-										this->oPenCropBoxOutline,
-										this->oBrushCropBoxFill);
-
-	// add horizontal lines
-	this->pGLTop = this->pGS->addLine(0, fY1, fRight, fY1,
-									  this->oPenCropLines);
-	this->pGLBottom = this->pGS->addLine(0, fY2, fRight, fY2,
-										 this->oPenCropLines);
-
-	// vertical lines
-	this->pGLLeft = this->pGS->addLine(fX1, 0, fX1, fBottom,
-									   this->oPenCropLines);
-	this->pGLRight = this->pGS->addLine(fX2, 0, fX2, fBottom,
-										this->oPenCropLines);
+	// show status (hor/ver/sq)
+	this->updateStatusMessage();
 
 } // rubberReleased
 
@@ -323,6 +315,64 @@ void QtSssSiCmainWindow::saveAndDestroyImage() {
 	this->bImageChanged = false;
 
 } // saveAndDestroyImage
+
+
+void QtSssSiCmainWindow::showCrop() {
+	//qDebug() << "showCrop";
+
+	this->bShowingCrop = true;
+
+	// make crop lines visible
+	this->pCLBottom->show();
+	this->pCLLeft->show();
+	this->pCLRight->show();
+	this->pCLTop->show();
+
+	// make boxes visible
+	this->pGRBottom->show();
+	this->pGRLeft->show();
+	this->pGRRight->show();
+	this->pGRTop->show();
+
+} // showCrop
+
+
+void QtSssSiCmainWindow::updateCropBoxes() {
+	//qDebug() << "updateCropBoxes";
+
+	QRectF oRectRubber = this->rubberRectNormalized();
+	QRectF oRectScene = this->pGS->sceneRect();
+	qreal fBottom, fRight, fX1, fX2, fY1, fY2;
+	fBottom = oRectScene.bottom();
+	fRight = oRectScene.right();
+
+	// read coordinates from selection
+	fX1 = oRectRubber.left();
+	fX2 = oRectRubber.right();
+	fY1 = oRectRubber.top();
+	fY2 = oRectRubber.bottom();
+
+	// adjust rectangles
+	this->pGRBottom->setRect(0.0, fY2, fRight, fBottom - fY2);
+	this->pGRLeft->setRect(0.0, fY1, fX1, fY2 - fY1);
+	this->pGRRight->setRect(fX2, fY1, fRight - fX2, fY2 - fY1);
+	this->pGRTop->setRect(0.0, 0.0, fRight, fY1);
+
+} // updateCropBoxes
+
+
+void QtSssSiCmainWindow::updateCropLines() {
+	//qDebug() << "updateCropLines";
+
+	QRectF oRectRubber = this->rubberRectNormalized();
+
+	// position the crop lines
+	this->pCLBottom->setPosition(oRectRubber.bottom());
+	this->pCLLeft->setPosition(oRectRubber.left());
+	this->pCLRight->setPosition(oRectRubber.right());
+	this->pCLTop->setPosition(oRectRubber.top());
+
+} // updateCropLines
 
 
 void QtSssSiCmainWindow::updateGraphicsView() {
@@ -384,6 +434,33 @@ void QtSssSiCmainWindow::updatePixmap() {
 	this->pGS->setSceneRect(this->pCurrentImage->rect());
 
 } // updatePixmap
+
+
+void QtSssSiCmainWindow::updateStatusMessage(){
+	//qDebug() << "updateStatusMessage";
+
+	QRectF oRectRubber = this->rubberRectNormalized();
+
+	// prepare status bar message
+	QString sStatus;
+	if (oRectRubber.height() < oRectRubber.width()) {
+
+		sStatus = tr("crop is landscape");
+
+	} else if (oRectRubber.height() == oRectRubber.width()) {
+
+		sStatus = tr("crop is square");
+
+	} else {
+
+		sStatus = tr("crop is portrait");
+
+	} // if crop has landscape, portrait or square ratio
+
+	// show the message about ratio
+	this->pUI->statusBar->showMessage(sStatus);
+
+} // updateStatusMessage
 
 
 void QtSssSiCmainWindow::contextMenuEvent(QContextMenuEvent *event) {
@@ -549,6 +626,8 @@ void QtSssSiCmainWindow::on_buttonNext_clicked() {
 void QtSssSiCmainWindow::on_graphicsView_rubberBandChanged(const QRect &viewportRect, const QPointF &fromScenePoint, const QPointF &toScenePoint) {
 	//qDebug() << "rubber" << viewportRect << fromScenePoint << toScenePoint;
 
+	if (!this->pCurrentImage) return;
+
 	if (viewportRect.isNull()) {
 
 		this->rubberReleased();
@@ -602,20 +681,17 @@ void QtSssSiCmainWindow::hideCrop() {
 
 	this->bShowingCrop = false;
 
-	if (this->pGLBottom) {
+	// hide crop lines
+	this->pCLBottom->hide();
+	this->pCLLeft->hide();
+	this->pCLRight->hide();
+	this->pCLTop->hide();
 
-		//qDebug() << "got bottom";
-		delete this->pGLBottom; this->pGLBottom = 0;
-		delete this->pGLLeft; this->pGLLeft = 0;
-		delete this->pGLRight; this->pGLRight = 0;
-		delete this->pGLTop; this->pGLTop = 0;
-
-		delete this->pGRBottom; this->pGRBottom = 0;
-		delete this->pGRLeft; this->pGRLeft = 0;
-		delete this->pGRRight; this->pGRRight = 0;
-		delete this->pGRTop; this->pGRTop = 0;
-
-	} // if got crop lines
+	// hide crop boxes
+	this->pGRBottom->hide();
+	this->pGRLeft->hide();
+	this->pGRRight->hide();
+	this->pGRTop->hide();
 
 } // hideCrop
 
@@ -623,7 +699,6 @@ void QtSssSiCmainWindow::hideCrop() {
 void QtSssSiCmainWindow::resizeEvent(QResizeEvent *event) {
 	//qDebug() << "resizeEvent";
 
-	//QWidget::resizeEvent(event);
 	QMainWindow::resizeEvent(event);
 
 	this->updateGraphicsView();
@@ -654,6 +729,8 @@ void QtSssSiCmainWindow::on_actionDelete_triggered() {
 
 	if (!this->pCurrentImage) return;
 
+	this->hideCrop();
+
 	// delete forever, no trash
 	QFile::remove(*this->sPathFileCurrent);
 
@@ -664,6 +741,27 @@ void QtSssSiCmainWindow::on_actionDelete_triggered() {
 	this->saveAndDestroyImage();
 
 } // on_actionDelete_triggered
+
+
+void QtSssSiCmainWindow::cropLineMoved() {
+	//qDebug() << "cropLineMoved";
+
+	QRectF oRect(QPointF(this->pCLLeft->scenePos().x(),
+						 this->pCLTop->scenePos().y()),
+				 QPointF(this->pCLRight->scenePos().x(),
+						 this->pCLBottom->scenePos().y()));
+
+	// destroy old selection
+	delete this->pRubberSelection; this->pRubberSelection = 0;
+
+	// normalize rect and set as new selection
+	this->pRubberSelection = new QRectF(oRect.normalized());
+
+	this->updateCropBoxes();
+
+	this->updateStatusMessage();
+
+} // cropLineMoved
 
 
 
