@@ -45,6 +45,8 @@ QtSssSiCmainWindow::QtSssSiCmainWindow(QWidget *parent) :
 
 	this->pUI->setupUi(this);
 
+	this->setWindowTitle(this->windowTitle() + " 0.4.8");
+
 	this->initActions();
 
 	this->initTreeView();
@@ -499,13 +501,13 @@ void QtSssSiCmainWindow::updateStatusMessage(){
 
 	// prepare status bar message
 	QString sStatus;
-	QString sLorP = "    | ";
+	QString sLorP = "  |  ";
 	int iHeight = (int)oRectRubber.height();
 	int iWidth = (int)oRectRubber.width();
 
 	if (iHeight < iWidth) {
 
-		sLorP = " -- ";
+		sLorP = " --- ";
 		sStatus = tr("crop ratio is landscape");
 
 	} else if (iHeight == iWidth) {
@@ -521,7 +523,7 @@ void QtSssSiCmainWindow::updateStatusMessage(){
 	} // if crop has landscape, portrait or square ratio
 
 	// show the message about ratio
-	this->pUI->statusBar->showMessage(sStatus + " " +
+	this->pUI->statusBar->showMessage(sLorP + sStatus + " " +
 									  QString::number(iWidth, 2)
 									  + sLorP + QString::number(iHeight, 2)
 									  );

@@ -16,7 +16,9 @@ void QtSssSiCcropLine::initInstance() {
 
 	this->bMoveInitiatedViaSetPosition = false;
 
-	this->setPen(QPen(QBrush(Qt::red, Qt::SolidPattern), 3.0));
+	QPen oPen = QPen(QBrush(Qt::red, Qt::SolidPattern), 3.0);
+	oPen.setCosmetic(true);
+	this->setPen(oPen);
 	this->setFlags(QGraphicsItem::ItemIsMovable
 				   | QGraphicsItem::ItemSendsScenePositionChanges);
 

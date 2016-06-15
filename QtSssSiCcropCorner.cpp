@@ -16,7 +16,9 @@ void QtSssSiCcropCorner::initInstance() {
 
 	this->bMoveInitiatedViaSetPosition = false;
 
-	this->setPen(QPen(QBrush(Qt::green, Qt::Dense1Pattern), 7.0));
+	QPen oPen = QPen(QBrush(Qt::green, Qt::Dense1Pattern), 7.0);
+	oPen.setCosmetic(true);
+	this->setPen(oPen);
 	this->setFlags(QGraphicsItem::ItemIsMovable
 				   | QGraphicsItem::ItemSendsScenePositionChanges);
 
