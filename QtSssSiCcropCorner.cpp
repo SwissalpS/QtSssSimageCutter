@@ -16,23 +16,23 @@ void QtSssSiCcropCorner::initInstance() {
 
 	this->bMoveInitiatedViaSetPosition = false;
 
-	this->setPen(QPen(QBrush(Qt::green, Qt::SolidPattern), 3.0));
+	this->setPen(QPen(QBrush(Qt::green, Qt::Dense1Pattern), 7.0));
 	this->setFlags(QGraphicsItem::ItemIsMovable
 				   | QGraphicsItem::ItemSendsScenePositionChanges);
 
 	// set cursor
 	switch (this->iCorner) {
 
-		case 0:
+		case 0u:
 			// top-left
-		case 2:
+		case 2u:
 			// bottom-right
 			this->setCursor(QCursor(Qt::SizeFDiagCursor));
 			break;
 
-		case 1:
+		case 1u:
 			// top-right
-		case 3:
+		case 3u:
 			// bottom-left
 			this->setCursor(QCursor(Qt::SizeBDiagCursor));
 			break;
@@ -44,7 +44,7 @@ void QtSssSiCcropCorner::initInstance() {
 
 	} // switch this->iCorner
 
-	this->setRect(-2.5, -2.5, 5.0, 5.0);
+	this->setRect(-3.5, -3.5, 7.0, 7.0);
 
 	// make sure this item is on top
 	this->setZValue(std::numeric_limits<qreal>::max());
@@ -78,6 +78,8 @@ QVariant QtSssSiCcropCorner::itemChange(QGraphicsItem::GraphicsItemChange oChang
 			//Q_EMIT this->wasMoved(this->iCorner);
 
 		} // if got to emit signal
+
+		// clear flag
 		this->bMoveInitiatedViaSetPosition = false;
 
 		// return adjusted pos

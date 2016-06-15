@@ -25,13 +25,12 @@ QtSssSiCmainWindow::QtSssSiCmainWindow(QWidget *parent) :
 	pCurrentImage(0),
 	sPathFileCurrent(0),
 	pRubberSelection(new QRectF),
-	oPenCropLines(QPen(QBrush(Qt::red, Qt::SolidPattern), 3.0)),
 	oPenCropBoxOutline(QPen(Qt::NoPen)),
 	oBrushCropBoxFill(QBrush(Qt::gray, Qt::DiagCrossPattern)),
-	pCCBottomLeft(new QtSssSiCcropCorner(3)),
-	pCCBottomRight(new QtSssSiCcropCorner(2)),
-	pCCTopLeft(new QtSssSiCcropCorner(0)),
-	pCCTopRight(new QtSssSiCcropCorner(1)),
+	pCCBottomLeft(new QtSssSiCcropCorner(3u)),
+	pCCBottomRight(new QtSssSiCcropCorner(2u)),
+	pCCTopLeft(new QtSssSiCcropCorner(0u)),
+	pCCTopRight(new QtSssSiCcropCorner(1u)),
 	pCLBottom(new QtSssSiCcropLine(true)),
 	pCLLeft(new QtSssSiCcropLine(false)),
 	pCLRight(new QtSssSiCcropLine(false)),
@@ -341,6 +340,19 @@ void QtSssSiCmainWindow::saveAndDestroyImage() {
 } // saveAndDestroyImage
 
 
+void QtSssSiCmainWindow::setSelection(QRectF &oNewRect) {
+	//qDebug() << "setSelection";
+
+	// destroy old selection
+	delete this->pRubberSelection;
+	this->pRubberSelection = 0;
+
+	// normalize rect and set as new selection
+	this->pRubberSelection = new QRectF(oNewRect.normalized());
+
+} // setSelection
+
+
 void QtSssSiCmainWindow::showCrop() {
 	//qDebug() << "showCrop";
 
@@ -487,12 +499,19 @@ void QtSssSiCmainWindow::updateStatusMessage(){
 
 	// prepare status bar message
 	QString sStatus;
-	if (oRectRubber.height() < oRectRubber.width()) {
+	QString sLorP = "    | ";
+	int iHeight = (int)oRectRubber.height();
+	int iWidth = (int)oRectRubber.width();
 
+	if (iHeight < iWidth) {
+
+		sLorP = " -- ";
 		sStatus = tr("crop ratio is landscape");
 
-	} else if (oRectRubber.height() == oRectRubber.width()) {
+	} else if (iHeight == iWidth) {
 
+
+		sLorP = " |=| ";
 		sStatus = tr("crop aspect is square");
 
 	} else {
@@ -502,9 +521,10 @@ void QtSssSiCmainWindow::updateStatusMessage(){
 	} // if crop has landscape, portrait or square ratio
 
 	// show the message about ratio
-	this->pUI->statusBar->showMessage(sStatus + " "
-									  + QString::number(oRectRubber.width())
-									  + "|" + QString::number(oRectRubber.height()));
+	this->pUI->statusBar->showMessage(sStatus + " " +
+									  QString::number(iWidth, 2)
+									  + sLorP + QString::number(iHeight, 2)
+									  );
 
 } // updateStatusMessage
 
@@ -682,12 +702,8 @@ void QtSssSiCmainWindow::on_graphicsView_rubberBandChanged(const QRect &viewport
 
 	} // if null -> aka released
 
-	// destroy old selection
-	delete this->pRubberSelection; this->pRubberSelection = 0;
-
-	// normalize rect
 	QRectF oRect(fromScenePoint, toScenePoint);
-	this->pRubberSelection = new QRectF(oRect.normalized());
+	this->setSelection(oRect);
 
 } // on_graphicsView_rubberBandChanged
 
@@ -798,6 +814,8 @@ void QtSssSiCmainWindow::on_actionDelete_triggered() {
 void QtSssSiCmainWindow::cropCornerMoved(quint8 iCorner) {
 	//qDebug() << "cropCornerMoved" << iCorner;
 
+	if (!this->pCurrentImage) return;
+
 	qreal fX1, fX2, fY1, fY2;
 	fX1 = this->pCCTopLeft->scenePos().x();
 	fY1 = this->pCCTopLeft->scenePos().y();
@@ -832,13 +850,9 @@ void QtSssSiCmainWindow::cropCornerMoved(quint8 iCorner) {
 	} // switch iCorner
 
 	QRectF oRect(QPointF(fX1, fY1), QPointF(fX2, fY2));
+	this->setSelection(oRect);
 
-	// destroy old selection
-	delete this->pRubberSelection; this->pRubberSelection = 0;
-
-	// normalize rect and set as new selection
-	this->pRubberSelection = new QRectF(oRect.normalized());
-
+	// update the other markers
 	this->updateCropBoxes();
 
 	this->updateCropCorners();
@@ -857,16 +871,13 @@ void QtSssSiCmainWindow::cropLineMoved() {
 						 this->pCLTop->scenePos().y()),
 				 QPointF(this->pCLRight->scenePos().x(),
 						 this->pCLBottom->scenePos().y()));
+	this->setSelection(oRect);
 
-	// destroy old selection
-	delete this->pRubberSelection; this->pRubberSelection = 0;
-
-	// normalize rect and set as new selection
-	this->pRubberSelection = new QRectF(oRect.normalized());
+	this->updateCropBoxes();
 
 	this->updateCropCorners();
 
-	this->updateCropBoxes();
+	//this->updateCropLines();
 
 	this->updateStatusMessage();
 

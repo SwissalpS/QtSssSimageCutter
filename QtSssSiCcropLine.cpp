@@ -50,15 +50,19 @@ QVariant QtSssSiCcropLine::itemChange(QGraphicsItem::GraphicsItemChange oChange,
 
 		// oValue is the new position.
 		QPointF oNewPos = oValue.toPointF();
+		QRectF oRect = this->scene()->sceneRect();
 
 		// make sure we are not moved in the wrong direction
+		// and not moving outside scene boundrary
 		if (this->bIsHorizontal) {
 
-			oNewPos.setX(0.0);
+			oNewPos.setX(oRect.left());
+			oNewPos.setY(qMin(oRect.bottom(), qMax(oNewPos.y(), oRect.top())));
 
 		} else {
 
-			oNewPos.setY(0.0);
+			oNewPos.setX(qMin(oRect.right(), qMax(oNewPos.x(), oRect.left())));
+			oNewPos.setY(oRect.top());
 
 		} // if horizontal or vertical
 
@@ -70,6 +74,8 @@ QVariant QtSssSiCcropLine::itemChange(QGraphicsItem::GraphicsItemChange oChange,
 			//Q_EMIT this->wasMoved();
 
 		} // if got to emit signal
+
+		// clear flag
 		this->bMoveInitiatedViaSetPosition = false;
 
 		// return adjusted pos
