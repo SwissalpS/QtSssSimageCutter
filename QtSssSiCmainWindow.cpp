@@ -1,5 +1,6 @@
 #include "QtSssSiCmainWindow.h"
 #include "ui_QtSssSiCmainWindow.h"
+#include "QtSssSiCcropCorner.h"
 #include "QtSssSiCcropLine.h"
 
 #include <QDebug>
@@ -27,6 +28,10 @@ QtSssSiCmainWindow::QtSssSiCmainWindow(QWidget *parent) :
 	oPenCropLines(QPen(QBrush(Qt::red, Qt::SolidPattern), 3.0)),
 	oPenCropBoxOutline(QPen(Qt::NoPen)),
 	oBrushCropBoxFill(QBrush(Qt::gray, Qt::DiagCrossPattern)),
+	pCCBottomLeft(new QtSssSiCcropCorner(3)),
+	pCCBottomRight(new QtSssSiCcropCorner(2)),
+	pCCTopLeft(new QtSssSiCcropCorner(0)),
+	pCCTopRight(new QtSssSiCcropCorner(1)),
 	pCLBottom(new QtSssSiCcropLine(true)),
 	pCLLeft(new QtSssSiCcropLine(false)),
 	pCLRight(new QtSssSiCcropLine(false)),
@@ -93,6 +98,14 @@ void QtSssSiCmainWindow::initGraphicsView() {
 	this->pUI->graphicsView->setScene(this->pGS);
 
 	// connect moved-signals of corners
+	connect(this->pCCBottomLeft, SIGNAL(wasMoved(quint8)),
+			this, SLOT(cropCornerMoved(quint8)));
+	connect(this->pCCBottomRight, SIGNAL(wasMoved(quint8)),
+			this, SLOT(cropCornerMoved(quint8)));
+	connect(this->pCCTopLeft, SIGNAL(wasMoved(quint8)),
+			this, SLOT(cropCornerMoved(quint8)));
+	connect(this->pCCTopRight, SIGNAL(wasMoved(quint8)),
+			this, SLOT(cropCornerMoved(quint8)));
 
 	// connect moved-signals of lines
 	connect(this->pCLBottom, SIGNAL(wasMoved()), this, SLOT(cropLineMoved()));
@@ -100,15 +113,7 @@ void QtSssSiCmainWindow::initGraphicsView() {
 	connect(this->pCLRight, SIGNAL(wasMoved()), this, SLOT(cropLineMoved()));
 	connect(this->pCLTop, SIGNAL(wasMoved()), this, SLOT(cropLineMoved()));
 
-	// add crop-corners to scene
-
-	// add crop-lines to scene
-	this->pGS->addItem(this->pCLBottom);
-	this->pGS->addItem(this->pCLLeft);
-	this->pGS->addItem(this->pCLRight);
-	this->pGS->addItem(this->pCLTop);
-
-	// create crop box instances
+	// create crop box instances to scene
 	this->pGRTop = this->pGS->addRect(0.0, 0.0, 1.0, 1.0,
 									  this->oPenCropBoxOutline,
 									  this->oBrushCropBoxFill);
@@ -129,6 +134,22 @@ void QtSssSiCmainWindow::initGraphicsView() {
 	this->pGRLeft->setZValue(iZ);
 	this->pGRRight->setZValue(iZ);
 	this->pGRTop->setZValue(iZ);
+
+	// Z-Value does not seem to have an effect,
+	// farmore the order in which the graphic-items
+	// are added to scene!
+
+	// add crop-lines to scene
+	this->pGS->addItem(this->pCLBottom);
+	this->pGS->addItem(this->pCLLeft);
+	this->pGS->addItem(this->pCLRight);
+	this->pGS->addItem(this->pCLTop);
+
+	// add crop-corners to scene
+	this->pGS->addItem(this->pCCBottomLeft);
+	this->pGS->addItem(this->pCCBottomRight);
+	this->pGS->addItem(this->pCCTopLeft);
+	this->pGS->addItem(this->pCCTopRight);
 
 	this->hideCrop();
 
@@ -256,6 +277,9 @@ void QtSssSiCmainWindow::rotateImage(qreal fAngle) {
 void QtSssSiCmainWindow::rubberReleased() {
 	//qDebug() << "rubber released";
 
+	// position the crop corners
+	this->updateCropCorners();
+
 	// position the crop lines
 	this->updateCropLines();
 
@@ -322,17 +346,23 @@ void QtSssSiCmainWindow::showCrop() {
 
 	this->bShowingCrop = true;
 
-	// make crop lines visible
-	this->pCLBottom->show();
-	this->pCLLeft->show();
-	this->pCLRight->show();
-	this->pCLTop->show();
-
 	// make boxes visible
 	this->pGRBottom->show();
 	this->pGRLeft->show();
 	this->pGRRight->show();
 	this->pGRTop->show();
+
+	// make crop corners visible
+	this->pCCBottomLeft->show();
+	this->pCCBottomRight->show();
+	this->pCCTopLeft->show();
+	this->pCCTopRight->show();
+
+	// make crop lines visible
+	this->pCLBottom->show();
+	this->pCLLeft->show();
+	this->pCLRight->show();
+	this->pCLTop->show();
 
 } // showCrop
 
@@ -359,6 +389,20 @@ void QtSssSiCmainWindow::updateCropBoxes() {
 	this->pGRTop->setRect(0.0, 0.0, fRight, fY1);
 
 } // updateCropBoxes
+
+
+void QtSssSiCmainWindow::updateCropCorners() {
+	//qDebug() << "updateCropCorners";
+
+	QRectF oRectRubber = this->rubberRectNormalized();
+
+	// position the crop corners
+	this->pCCBottomLeft->setPosition(oRectRubber.left(), oRectRubber.bottom());
+	this->pCCBottomRight->setPosition(oRectRubber.right(), oRectRubber.bottom());
+	this->pCCTopLeft->setPosition(oRectRubber.left(), oRectRubber.top());
+	this->pCCTopRight->setPosition(oRectRubber.right(), oRectRubber.top());
+
+} // updateCropCorners
 
 
 void QtSssSiCmainWindow::updateCropLines() {
@@ -445,20 +489,22 @@ void QtSssSiCmainWindow::updateStatusMessage(){
 	QString sStatus;
 	if (oRectRubber.height() < oRectRubber.width()) {
 
-		sStatus = tr("crop is landscape");
+		sStatus = tr("crop ratio is landscape");
 
 	} else if (oRectRubber.height() == oRectRubber.width()) {
 
-		sStatus = tr("crop is square");
+		sStatus = tr("crop aspect is square");
 
 	} else {
 
-		sStatus = tr("crop is portrait");
+		sStatus = tr("crop aspect is portrait");
 
 	} // if crop has landscape, portrait or square ratio
 
 	// show the message about ratio
-	this->pUI->statusBar->showMessage(sStatus);
+	this->pUI->statusBar->showMessage(sStatus + " "
+									  + QString::number(oRectRubber.width())
+									  + "|" + QString::number(oRectRubber.height()));
 
 } // updateStatusMessage
 
@@ -681,6 +727,12 @@ void QtSssSiCmainWindow::hideCrop() {
 
 	this->bShowingCrop = false;
 
+	// hide crop corners
+	this->pCCBottomLeft->hide();
+	this->pCCBottomRight->hide();
+	this->pCCTopLeft->hide();
+	this->pCCTopRight->hide();
+
 	// hide crop lines
 	this->pCLBottom->hide();
 	this->pCLLeft->hide();
@@ -743,6 +795,61 @@ void QtSssSiCmainWindow::on_actionDelete_triggered() {
 } // on_actionDelete_triggered
 
 
+void QtSssSiCmainWindow::cropCornerMoved(quint8 iCorner) {
+	//qDebug() << "cropCornerMoved" << iCorner;
+
+	qreal fX1, fX2, fY1, fY2;
+	fX1 = this->pCCTopLeft->scenePos().x();
+	fY1 = this->pCCTopLeft->scenePos().y();
+	fX2 = this->pCCBottomRight->scenePos().x();
+	fY2 = this->pCCBottomRight->scenePos().y();
+
+	switch (iCorner) {
+
+		case 0u:
+			// top-left-corner
+		case 2u:
+			// bottom-right-corner
+			break;
+
+		case 1u:
+			// top-right-corner
+			fY1 = this->pCCTopRight->scenePos().y();
+			fX2 = this->pCCTopRight->scenePos().x();
+			break;
+
+
+		case 3u:
+			// bottom-left-corner
+			fX1 = this->pCCBottomLeft->scenePos().x();
+			fY2 = this->pCCBottomLeft->scenePos().y();
+			break;
+
+		default:
+			return;
+			break;
+
+	} // switch iCorner
+
+	QRectF oRect(QPointF(fX1, fY1), QPointF(fX2, fY2));
+
+	// destroy old selection
+	delete this->pRubberSelection; this->pRubberSelection = 0;
+
+	// normalize rect and set as new selection
+	this->pRubberSelection = new QRectF(oRect.normalized());
+
+	this->updateCropBoxes();
+
+	this->updateCropCorners();
+
+	this->updateCropLines();
+
+	this->updateStatusMessage();
+
+} // cropCornerMoved
+
+
 void QtSssSiCmainWindow::cropLineMoved() {
 	//qDebug() << "cropLineMoved";
 
@@ -756,6 +863,8 @@ void QtSssSiCmainWindow::cropLineMoved() {
 
 	// normalize rect and set as new selection
 	this->pRubberSelection = new QRectF(oRect.normalized());
+
+	this->updateCropCorners();
 
 	this->updateCropBoxes();
 

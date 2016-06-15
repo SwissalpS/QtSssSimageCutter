@@ -23,6 +23,7 @@ namespace SwissalpS { namespace QtSssSiC {
 
 
 
+class QtSssSiCcropCorner;
 class QtSssSiCcropLine;
 class QtSssSiCmainWindow : public QMainWindow {
 
@@ -43,6 +44,10 @@ private:
 	QPen oPenCropLines;
 	QPen oPenCropBoxOutline;
 	QBrush oBrushCropBoxFill;
+	QtSssSiCcropCorner *pCCBottomLeft;
+	QtSssSiCcropCorner *pCCBottomRight;
+	QtSssSiCcropCorner *pCCTopLeft;
+	QtSssSiCcropCorner *pCCTopRight;
 	QtSssSiCcropLine *pCLBottom;
 	QtSssSiCcropLine *pCLLeft;
 	QtSssSiCcropLine *pCLRight;
@@ -68,6 +73,7 @@ protected:
 	void saveImage();
 	void saveAndDestroyImage();
 	void updateCropBoxes();
+	void updateCropCorners();
 	void updateCropLines();
 	void updateGraphicsView();
 	void updateLandscapeIndicator();
@@ -99,6 +105,7 @@ private slots:
 	void on_actionDelete_triggered();
 
 public slots:
+	void cropCornerMoved(quint8 iCorner);
 	void cropLineMoved();
 	void hideCrop();
 	void loadImage(const QString &sPathFile);
