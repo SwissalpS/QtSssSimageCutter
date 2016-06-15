@@ -92,6 +92,7 @@ protected:
 
 	// events
 	void contextMenuEvent(QContextMenuEvent *event);
+	void wheelEvent(QWheelEvent *event);
 	void resizeEvent(QResizeEvent *event);
 
 private slots:

@@ -9,6 +9,7 @@
 #include <qgraphicsitem.h>
 #include <QStandardPaths>
 #include <QImageWriter>
+#include <QWheelEvent>
 #include <limits>
 
 
@@ -536,6 +537,28 @@ void QtSssSiCmainWindow::contextMenuEvent(QContextMenuEvent *event) {
 	Q_UNUSED(event);
 
 } // contextMenuEvent
+
+
+void QtSssSiCmainWindow::wheelEvent(QWheelEvent *event) {
+	//qDebug() << "wheelEvent" << event << event->posF();
+
+	// if not (right-button-down or (shift+control)) -> don't bother
+	if (!(((Qt::ShiftModifier | Qt::ControlModifier) == event->modifiers())
+			|| (Qt::RightButton == event->buttons()))) return;
+
+	QGraphicsView *pGV = this->pUI->graphicsView;
+
+	pGV->setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
+	//pGV->setTransformationAnchor(QGraphicsView::AnchorViewCenter);
+
+	qreal fRatio = 1.15;
+	if (0 > event->delta()) fRatio = 1 / fRatio;
+
+	pGV->scale(fRatio, fRatio);
+
+	event->accept();
+
+} // wheelEvent
 
 
 void QtSssSiCmainWindow::onMenuOpen() {
