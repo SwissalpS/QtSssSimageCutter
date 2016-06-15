@@ -196,7 +196,7 @@ void QtSssSiCmainWindow::rotateImage(qreal fAngle) {
 
 	this->bImageChanged = true;
 
-	this->removeCropMarker();
+	this->hideCrop();
 
 	QTransform oTransform;
 	oTransform.rotate(fAngle);
@@ -213,7 +213,8 @@ void QtSssSiCmainWindow::rotateImage(qreal fAngle) {
 void QtSssSiCmainWindow::rubberReleased() {
 	//qDebug() << "rubber released";
 
-	this->removeCropMarker();
+	// position the crop lines
+	this->updateCropLines();
 
 	// show rubber
 	this->bShowingCrop = true;
@@ -509,7 +510,7 @@ void QtSssSiCmainWindow::on_buttonCrop_clicked() {
 	// fetch normalized rubber rect
 	QRect oRectRubber = this->rubberRectNormalized().toRect();
 
-	this->removeCropMarker();
+	this->hideCrop();
 
 	// crop image
 	QImage oImageCropped = this->pCurrentImage->copy(oRectRubber);
@@ -569,7 +570,7 @@ void QtSssSiCmainWindow::on_graphicsView_rubberBandChanged(const QRect &viewport
 void QtSssSiCmainWindow::loadImage(const QString &sPathFile) {
 	//qDebug() << "loadImage" << sPathFile;
 
-	this->removeCropMarker();
+	this->hideCrop();
 
 	QImage oImage(sPathFile);
 
@@ -596,8 +597,8 @@ void QtSssSiCmainWindow::loadImage(const QString &sPathFile) {
 } // loadImage
 
 
-void QtSssSiCmainWindow::removeCropMarker() {
-	//qDebug() << "removeCropMarker";
+void QtSssSiCmainWindow::hideCrop() {
+	//qDebug() << "hideCrop";
 
 	this->bShowingCrop = false;
 
@@ -616,7 +617,7 @@ void QtSssSiCmainWindow::removeCropMarker() {
 
 	} // if got crop lines
 
-} // removeCropMarker
+} // hideCrop
 
 
 void QtSssSiCmainWindow::resizeEvent(QResizeEvent *event) {

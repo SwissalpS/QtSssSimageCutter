@@ -95,8 +95,9 @@ private slots:
 	void on_actionDelete_triggered();
 
 public slots:
+	void cropLineMoved();
+	void hideCrop();
 	void loadImage(const QString &sPathFile);
-	void removeCropMarker();
 
 };
 
